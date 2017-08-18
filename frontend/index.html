@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html lang = "en">
+<head>
+  <title>postmessage</title>
+  <meta charset = "UTF-8" />
+</head>
+<style>
+  .wrapper {
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+<body>
+  <div class="wrapper">
+      Testing postMessage - Front end.
+    </p>
+    <button id="buttonGet">Send GET Request to due API</button>
+    <p id="resultsGet">
+      Results from GET API call:
+    <p>
+    <hr>
+    <input id="cc">CC (ie visa, mastercard)</input>
+    <input id="cvv">CVV (3 digit code)</input>
+    <button id="buttonPost">Send POST Request to mock due API</button>
+    <p id="resultsPost">
+      Results from POST API call:
+    <p>
+    <iframe id="receiver" src="http://localhost:8001" width="400" height="500">
+    </iframe>
+  </div>
+<script>
+const buttonGet = document.getElementById('buttonGet');
+const buttonPost = document.getElementById('buttonPost');
+
+const receiver = document.getElementById('receiver').contentWindow;
+
+// Get a reference to the 'Send Message' button.
+let resultsGet = document.getElementById('resultsGet');
+
+let cc = document.getElementById('cc');
+let cvv = document.getElementById('cvv');
+
+// A function to handle sending messages.
+function sendGetMessage(e) {
+  e.preventDefault();
+  resultsGet.innerHTML = "loading...";
+  // Send a message with a GET message type to the receiver (service) iFrame
+  let dataObject = {
+    type: 'get',
+  }
+  console.log(dataObject);
+  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+}
+
+//send a postmessage with input values to service that's loaded in the iframe
+// function sendPostMessage() {
+//   resultsPost.innerHTML = "loading...";
+//   let dataObject = {
+//     type: 'post',
+//     cc: cc.value,
+//     cvv: cvv.value,
+//   }
+//   console.log("cc", cc.value);
+//   // Send a message with a POST message type to the receiver (service) iFrame
+//   receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+//
+// }
+
+function sendPostMessage(dataObject, messageHandler) {
+  //logic for getting data object together
+  window.addEventListener('message', (e) => messageHandler(e));
+  resultsPost.innerHTML = "loading...";
+  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+};
+
+let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
+//make sure origin is verfied against whitelist
+function checkWhiteList(origin) {
+  for (var i = 0; i < whiteList.length; i++) {
+    if (origin === whiteList[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+//handle incoming postMessages
+function messageHandler(e, callback) {
+  if (checkWhiteList(e.origin)) {
+    //if origin is whitelist-approved, test for message type, and place data accordingly
+    console.log("e.data.Message:", e.data.Message);
+    console.log("e.data:", e.data);
+    if (e.data.type === "post") {
+      document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
+    } else {
+      // callback(e.data.Message);
+      document.getElementById('resultsGet').innerHTML = e.data.Message;
+    }
+  } else {
+    return
+  }
+}
+
+buttonGet.addEventListener('click', sendGetMessage);
+buttonPost.addEventListener('click', () => sendPostMessage({
+  type: 'post',
+  cc: cc.value,
+  cvv: cvv.value,
+}, messageHandler));
+//global listener
+// window.addEventListener('message', messageHandler);
+</script>
+</body>
+</html>

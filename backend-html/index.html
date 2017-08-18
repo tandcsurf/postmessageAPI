@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html lang = "en">
+<head>
+  <title>postmessage</title>
+  <meta charset = "UTF-8" />
+</head>
+<body>
+  <div id="testArea">
+    <p>
+      //this iFrame (with html/JS sourced from a different domain, ostensibly the provider/service.) is sent a postmessage from the client.
+      <br><br>
+      //If that postmessage has a whitelist-approved origin, the code served by the iFrame then uses fetch to send a GET/POST request to the back-end API.
+      <br><br>
+      //Upon success in the fetch promises, a postmessage is dispatched back to the original client's front end, containing data from the back-end API.
+      <br><br>
+      //The response from the GET will be displayed above for demonstration purposes. If It's a POST request, a confirmation of the data will be sent back and displayed above. Note: As of right now, the due API throws an error on POST, so i set up a node server to act as a stand-in back-end
+    </p>
+  </div>
+<script>
+
+// // A function to handle sending messages.
+// function sendMessage(e) {
+//   e.preventDefault();
+//   // Send a message with the text 'Hello Treehouse!' to the receiver window.
+//   receiver.postMessage('testing', 'https://api.due.com/v1/');
+// }
+
+let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
+
+function checkWhiteList(origin) {
+  for (var i = 0; i < whiteList.length; i++) {
+    if (origin === whiteList[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function messageHandler(e) {
+  if (checkWhiteList(e.origin)) {
+    let data = JSON.parse(e.data);
+    if (data.type === "get") {
+      fetch ('https://api.due.com/v1/')
+        .then((response) => response.json())
+        .then(function(data) {
+          console.log("backend-html sourced into iframe data:", data);
+          parent.postMessage(data, 'http://localhost:8000');
+      });
+    } else if (data.type === "post") {
+      console.log(data.cc, data.cvv);
+        fetch ('http://localhost:3000', {
+        	method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            cc: data.cc,
+            cvv: data.cvv,
+          }),
+        })
+          .then((response) => response.json())
+          .then(function(res) {
+          parent.postMessage(res, 'http://localhost:8000');
+        });
+      }
+    }
+    return
+  }
+
+window.addEventListener('message', messageHandler);
+</script>
+</body>
+</html>
