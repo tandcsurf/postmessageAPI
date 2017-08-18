@@ -80,7 +80,9 @@ function sendPostMessage(dataObject, callback) {
       //if the data incoming is from a post request, plunk it down into the DOM under "returned post data"
       if (e.data.type === "post") {
         document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
-        //this logs out the callback from line 70 successfully. however, i initially thought i'd have to pass the callback down to the eventListener function on line 75 as an argument in order for it to be referencable here (on line 86).. However, when I do that, I get an error that "callback is not a function"
+        //this logs out the callback from line 70 successfully. however, i initially thought i'd have to pass the callback down to the
+        // eventListener function on line 75 as an argument in order for it to be referencable here (on line 88).. However, when
+        //I do that, I get an error that "callback is not a function"
         console.log("arguments 2:", callback);
         // arguments[2](e.data);
         callback(e.data);
