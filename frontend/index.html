@@ -40,32 +40,6 @@ let resultsGet = document.getElementById('resultsGet');
 let cc = document.getElementById('cc');
 let cvv = document.getElementById('cvv');
 
-// A function to handle sending messages.
-function sendGetMessage(e) {
-  e.preventDefault();
-  resultsGet.innerHTML = "loading...";
-  // Send a message with a GET message type to the receiver (service) iFrame
-  let dataObject = {
-    type: 'get',
-  }
-  console.log(dataObject);
-  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
-}
-
-//send a postmessage with input values to service that's loaded in the iframe
-// function sendPostMessage() {
-//   resultsPost.innerHTML = "loading...";
-//   let dataObject = {
-//     type: 'post',
-//     cc: cc.value,
-//     cvv: cvv.value,
-//   }
-//   console.log("cc", cc.value);
-//   // Send a message with a POST message type to the receiver (service) iFrame
-//   receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
-//
-// }
-
 //function for sending a data object, and a callback to handle the data, via the html5 postmessage API
 function sendPostMessage(dataObject, callback) {
   console.log(callback);
@@ -79,23 +53,28 @@ function sendPostMessage(dataObject, callback) {
       console.log("e.data:", e.data);
       //if the data incoming is from a post request, plunk it down into the DOM under "returned post data"
       if (e.data.type === "post") {
-        document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
-        //this logs out the callback from line 70 successfully. however, i initially thought i'd have to pass the callback down to the
-        // eventListener function on line 75 as an argument in order for it to be referencable here (on line 88).. However, when
-        //I do that, I get an error that "callback is not a function"
         console.log("arguments 2:", callback);
         // arguments[2](e.data);
         callback(e.data);
+        document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
+        window.removeEventListener('message', eventListener);
       } else {
+        callback(e.data);
         document.getElementById('resultsGet').innerHTML = e.data.Message;
+        window.removeEventListener('message', eventListener);
       }
     } else {
       return
     }
   }
 
-  resultsPost.innerHTML = "loading...";
-  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+  if (dataObject.type === 'get') {
+    resultsGet.innerHTML = "loading...";
+    receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+  } else if (dataObject.type === 'post') {
+    resultsPost.innerHTML = "loading...";
+    receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+  }
 };
 
 let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
@@ -109,25 +88,9 @@ function checkWhiteList(origin) {
   return false;
 }
 
-//handle incoming postMessages
-// function messageHandler(e, callback) {
-//   if (checkWhiteList(e.origin)) {
-//     //if origin is whitelist-approved, test for message type, and place data accordingly
-//     console.log("e.data.Message:", e.data.Message);
-//     console.log("e.data:", e.data);
-//     if (e.data.type === "post") {
-//       document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
-//       console.log("arguments 2:", callback);
-//       // arguments[2](e.data);
-//     } else {
-//       document.getElementById('resultsGet').innerHTML = e.data.Message;
-//     }
-//   } else {
-//     return
-//   }
-// }
-
-buttonGet.addEventListener('click', sendGetMessage);
+buttonGet.addEventListener('click', () => sendPostMessage({type: 'get'}, function(data) {
+  console.log("data:", data);
+}));
 buttonPost.addEventListener('click', () => sendPostMessage({
   type: 'post',
   cc: cc.value,
@@ -135,8 +98,6 @@ buttonPost.addEventListener('click', () => sendPostMessage({
 }, function(data) {
   console.log("data:", data);
 }));
-//global listener
-// window.addEventListener('message', messageHandler);
 </script>
 </body>
 </html>
