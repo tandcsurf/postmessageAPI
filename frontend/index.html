@@ -14,14 +14,14 @@
   <div class="wrapper">
       Testing postMessage - Front end.
     </p>
-    <button id="buttonGet">Send GET Request to due API</button>
+    <button id="getButton">Send GET Request to due API</button>
     <p id="resultsGet">
       Results from GET API call:
     <p>
     <hr>
     <input id="cc">CC (ie visa, mastercard)</input>
     <input id="cvv">CVV (3 digit code)</input>
-    <button id="buttonPost">Send POST Request to mock due API</button>
+    <button id="postButton">Send POST Request to mock due API</button>
     <p id="resultsPost">
       Results from POST API call:
     <p>
@@ -29,38 +29,58 @@
     </iframe>
   </div>
 <script>
-const buttonGet = document.getElementById('buttonGet');
-const buttonPost = document.getElementById('buttonPost');
+//references to buttons for each request type
+const getButton = document.getElementById('getButton');
+const postButton = document.getElementById('postButton');
 
+//iframe with code sourced from external service
 const receiver = document.getElementById('receiver').contentWindow;
 
-// Get a reference to the 'Send Message' button.
-let resultsGet = document.getElementById('resultsGet');
+//references to divs where results for each request will be displayed for this demonstration
+let resultsGet = document.getElementById('resultsGet').innerHTML;
+let resultsPost = document.getElementById('resultsPost').innerHTML;
 
-let cc = document.getElementById('cc');
-let cvv = document.getElementById('cvv');
+//function for extracting input values to send off
+let valueById = function(id) {
+  return document.getElementById(id).value;
+}
 
-//function for sending a data object, and a callback to handle the data, via the html5 postmessage API
+//function to hook up buttons with respective events
+var addEvent = function(e,v,f) {
+        e.addEventListener(v, f, false);
+    };
+
+//on a click of the GET button, send a postMessage to the service with "get" in the message body
+addEvent(getButton, 'click', () => sendPostMessage({type: 'get'}, function(data) {
+  document.getElementById('resultsGet').innerHTML = data.Message;
+}));
+
+//on a click of the POST button, send a postMessage to the service with "post" + input data in the message body
+addEvent(postButton, 'click', () => sendPostMessage({
+  type: 'post',
+  cc: valueById('cc'),
+  cvv: valueById('cvv'),
+}, function(data) {
+  document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${data.cc} cvv: ${data.cvv}`;
+}));
+
+//function for sending a data object, and a callback to handle the data, via the html5 postMessage API
 function sendPostMessage(dataObject, callback) {
-  console.log(callback);
   //add an event listener to the window, listening for a 'message' event from outside domains
   window.addEventListener('message', eventListener);
-  //this is the listener function for a 'message' event, for when another domain gets our postmessage, and sends back some data in a postmessage
+  //this is the listener function for a 'message' event, for when another domain gets our postMessage, and sends back some data in a postMessage
   function eventListener(e) {
     //if origin is whitelist-approved, test for message type, and place data accordingly
     if (checkWhiteList(e.origin)) {
-      console.log("e.data.Message:", e.data.Message);
-      console.log("e.data:", e.data);
-      //if the data incoming is from a post request, plunk it down into the DOM under "returned post data"
+      //if the data incoming is from a post request, plunk it down into the DOM under "returned post data".
+      //otherwise, send it to the GET results section
       if (e.data.type === "post") {
-        console.log("arguments 2:", callback);
-        // arguments[2](e.data);
         callback(e.data);
-        document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
+        resultsPost = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
         window.removeEventListener('message', eventListener);
       } else {
         callback(e.data);
-        document.getElementById('resultsGet').innerHTML = e.data.Message;
+        resultsGet = e.data.Message;
         window.removeEventListener('message', eventListener);
       }
     } else {
@@ -87,17 +107,6 @@ function checkWhiteList(origin) {
   }
   return false;
 }
-
-buttonGet.addEventListener('click', () => sendPostMessage({type: 'get'}, function(data) {
-  console.log("data:", data);
-}));
-buttonPost.addEventListener('click', () => sendPostMessage({
-  type: 'post',
-  cc: cc.value,
-  cvv: cvv.value,
-}, function(data) {
-  console.log("data:", data);
-}));
 </script>
 </body>
 </html>
