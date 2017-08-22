@@ -18,13 +18,6 @@
   </div>
 <script>
 
-// // A function to handle sending messages.
-// function sendMessage(e) {
-//   e.preventDefault();
-//   // Send a message with the text 'Hello Treehouse!' to the receiver window.
-//   receiver.postMessage('testing', 'https://api.due.com/v1/');
-// }
-
 let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
 
 function checkWhiteList(origin) {
@@ -39,6 +32,7 @@ function checkWhiteList(origin) {
 function messageHandler(e) {
   if (checkWhiteList(e.origin)) {
     let data = JSON.parse(e.data);
+    //fetch the GET data from due.
     if (data.type === "get") {
       fetch ('https://api.due.com/v1/')
         .then((response) => response.json())
@@ -46,6 +40,8 @@ function messageHandler(e) {
           console.log("backend-html sourced into iframe data:", data);
           parent.postMessage(data, 'http://localhost:8000');
       });
+      //if it's a post request, grab the data with fetch from within the servive, and respond
+      //to the initial requestor via parent.postMessage
     } else if (data.type === "post") {
       console.log(data.cc, data.cvv);
         fetch ('http://localhost:3000', {
