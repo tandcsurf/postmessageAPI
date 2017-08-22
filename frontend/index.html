@@ -40,8 +40,8 @@ const postButton = document.getElementById('postButton');
 const receiver = document.getElementById('receiver').contentWindow;
 
 //references to divs where results for each request will be displayed for this demonstration
-let resultsGet = document.getElementById('resultsGet').innerHTML;
-let resultsPost = document.getElementById('resultsPost').innerHTML;
+let resultsGet = document.getElementById('resultsGet');
+let resultsPost = document.getElementById('resultsPost');
 
 //function for extracting input values to send off
 let valueById = function(id) {
@@ -55,7 +55,7 @@ var addEvent = function(e,v,f) {
 
 //on a click of the GET button, send a postMessage to the service with "get" in the message body
 addEvent(getButton, 'click', () => sendPostMessage({type: 'get'}, function(data) {
-  document.getElementById('resultsGet').innerHTML = data.Message;
+  resultsGet.innerHTML = data.Message;
 }));
 
 //on a click of the POST button, send a postMessage to the service with "post" + input data in the message body
@@ -64,7 +64,7 @@ addEvent(postButton, 'click', () => sendPostMessage({
   cc: valueById('cc'),
   cvv: valueById('cvv'),
 }, function(data) {
-  document.getElementById('resultsPost').innerHTML = `confirmed! cc: ${data.cc} cvv: ${data.cvv}`;
+  resultsPost.innerHTML = `confirmed! cc: ${data.cc} cvv: ${data.cvv}`;
 }));
 
 //function for sending a data object, and a callback to handle the data, via the html5 postMessage API
@@ -90,14 +90,14 @@ function sendPostMessage(dataObject, callback) {
       return
     }
   }
-
+  //insert loading message into results areas
   if (dataObject.type === 'get') {
     resultsGet.innerHTML = "loading...";
-    receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
   } else if (dataObject.type === 'post') {
     resultsPost.innerHTML = "loading...";
-    receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
   }
+  //send postMessage
+  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
 };
 
 let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];

@@ -20,6 +20,7 @@
 
 let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
 
+//function for checking origin against whitelist
 function checkWhiteList(origin) {
   for (var i = 0; i < whiteList.length; i++) {
     if (origin === whiteList[i]) {
@@ -29,6 +30,7 @@ function checkWhiteList(origin) {
   return false;
 }
 
+//on message event, check whiteList, check request type (post or get), complete request, send back via postMessage
 function messageHandler(e) {
   if (checkWhiteList(e.origin)) {
     let data = JSON.parse(e.data);
@@ -40,7 +42,7 @@ function messageHandler(e) {
           console.log("backend-html sourced into iframe data:", data);
           parent.postMessage(data, 'http://localhost:8000');
       });
-      //if it's a post request, grab the data with fetch from within the servive, and respond
+      //if it's a post request, grab the data with fetch from within the service, and respond
       //to the initial requestor via parent.postMessage
     } else if (data.type === "post") {
       console.log(data.cc, data.cvv);
