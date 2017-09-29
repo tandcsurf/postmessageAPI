@@ -31,6 +31,7 @@
     <iframe id="receiver" src="http://localhost:8001" width="400" height="500">
     </iframe>
   </div>
+<script type="text/javascript" src="http://localhost:8002/postMessageAPI.js"></script>
 <script>
 //references to buttons for each request type
 const getButton = document.getElementById('getButton');
@@ -54,12 +55,12 @@ var addEvent = function(e,v,f) {
     };
 
 //on a click of the GET button, send a postMessage to the service with "get" in the message body
-addEvent(getButton, 'click', () => sendPostMessage({type: 'get'}, function(data) {
+addEvent(getButton, 'click', () => postMessageAPI.sendPostMessage({type: 'get'}, function(data) {
   resultsGet.innerHTML = data.Message;
 }));
 
 //on a click of the POST button, send a postMessage to the service with "post" + input data in the message body
-addEvent(postButton, 'click', () => sendPostMessage({
+addEvent(postButton, 'click', () => postMessageAPI.sendPostMessage({
   type: 'post',
   cc: valueById('cc'),
   cvv: valueById('cvv'),
@@ -67,38 +68,38 @@ addEvent(postButton, 'click', () => sendPostMessage({
   resultsPost.innerHTML = `confirmed! cc: ${data.cc} cvv: ${data.cvv}`;
 }));
 
-//function for sending a data object, and a callback to handle the data, via the html5 postMessage API
-function sendPostMessage(dataObject, callback) {
-  //add an event listener to the window, listening for a 'message' event from outside domains
-  window.addEventListener('message', eventListener);
-  //this is the listener function for a 'message' event, for when another domain gets our postMessage, and sends back some data in a postMessage
-  function eventListener(e) {
-    //if origin is whitelist-approved, test for message type, and place data accordingly
-    if (checkWhiteList(e.origin)) {
-      //if the data incoming is from a post request, plunk it down into the DOM under "returned post data".
-      //otherwise, send it to the GET results section
-      if (e.data.type === "post") {
-        callback(e.data);
-        resultsPost = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
-        window.removeEventListener('message', eventListener);
-      } else {
-        callback(e.data);
-        resultsGet = e.data.Message;
-        window.removeEventListener('message', eventListener);
-      }
-    } else {
-      return
-    }
-  }
-  //insert loading message into results areas
-  if (dataObject.type === 'get') {
-    resultsGet.innerHTML = "loading...";
-  } else if (dataObject.type === 'post') {
-    resultsPost.innerHTML = "loading...";
-  }
-  //send postMessage
-  receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
-};
+// //function for sending a data object, and a callback to handle the data, via the html5 postMessage API
+// function sendPostMessage(dataObject, callback) {
+//   //add an event listener to the window, listening for a 'message' event from outside domains
+//   window.addEventListener('message', eventListener);
+//   //this is the listener function for a 'message' event, for when another domain gets our postMessage, and sends back some data in a postMessage
+//   function eventListener(e) {
+//     //if origin is whitelist-approved, test for message type, and place data accordingly
+//     if (checkWhiteList(e.origin)) {
+//       //if the data incoming is from a post request, plunk it down into the DOM under "returned post data".
+//       //otherwise, send it to the GET results section
+//       if (e.data.type === "post") {
+//         callback(e.data);
+//         resultsPost = `confirmed! cc: ${e.data.cc} cvv: ${e.data.cvv}`;
+//         window.removeEventListener('message', eventListener);
+//       } else {
+//         callback(e.data);
+//         resultsGet = e.data.Message;
+//         window.removeEventListener('message', eventListener);
+//       }
+//     } else {
+//       return
+//     }
+//   }
+//   //insert loading message into results areas
+//   if (dataObject.type === 'get') {
+//     resultsGet.innerHTML = "loading...";
+//   } else if (dataObject.type === 'post') {
+//     resultsPost.innerHTML = "loading...";
+//   }
+//   //send postMessage
+//   receiver.postMessage(JSON.stringify(dataObject), 'http://localhost:8001');
+// };
 
 let whiteList = ['https://api.due.com/v1/', 'http://localhost:8000', 'http://localhost:8001'];
 //make sure origin is verfied against whitelist
